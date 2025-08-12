@@ -1,103 +1,199 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import axios from "axios";
+
+const STORAGE_KEY = "fetchedSiteData";
+
+export default function HomePage() {
+  const [url, setUrl] = useState<string>("");
+  const [html, setHtml] = useState<string>("");
+  const [assets, setAssets] = useState<{ images: string[]; css: string[]; js: string[] }>({
+    images: [],
+    css: [],
+    js: [],
+  });
+  const [loading, setLoading] = useState(false);  // <-- loading state
+
+  useEffect(() => {
+    const savedData = sessionStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+      const { url, html, assets } = JSON.parse(savedData);
+      setUrl(url);
+      setHtml(html);
+      setAssets(assets);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (html) {
+      sessionStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          url,
+          html,
+          assets,
+        })
+      );
+    } else {
+      sessionStorage.removeItem(STORAGE_KEY);
+    }
+  }, [url, html, assets]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      sessionStorage.removeItem(STORAGE_KEY);
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
+
+  const extractAssets = (html: string) => {
+    if (typeof window === "undefined") return;
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    const images = Array.from(doc.querySelectorAll("img")).map((img) => {
+      const image = img as HTMLImageElement;
+      return image.src.startsWith("http") ? image.src : new URL(image.src, url).href;
+    });
+
+    const css = Array.from(doc.querySelectorAll('link[rel="stylesheet"]')).map((link) => {
+      const stylesheet = link as HTMLLinkElement;
+      return stylesheet.href.startsWith("http") ? stylesheet.href : new URL(stylesheet.href, url).href;
+    });
+
+    const js = Array.from(doc.querySelectorAll("script[src]")).map((script) => {
+      const scriptEl = script as HTMLScriptElement;
+      return scriptEl.src.startsWith("http") ? scriptEl.src : new URL(scriptEl.src, url).href;
+    });
+
+    setAssets({ images, css, js });
+  };
+
+  const fetchSite = async () => {
+    setLoading(true);  // start loading
+    try {
+      const res = await axios.post("http://localhost:5000/fetch-site", { url });
+      setHtml(res.data.html);
+      extractAssets(res.data.html);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to fetch site");
+    } finally {
+      setLoading(false);  // stop loading no matter what
+    }
+  };
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(html).then(() => {
+      alert("HTML copied to clipboard!");
+    });
+  };
+
+  const downloadHTML = () => {
+    const blob = new Blob([html], { type: "text/html" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "website.html";
+    link.click();
+  };
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div style={{ padding: 20 }}>
+      <h1>Fetch Website HTML</h1>
+      <input
+        type="text"
+        placeholder="Enter website URL"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        style={{ width: "300px", marginRight: "10px" }}
+        disabled={loading} // disable input while loading
+      />
+      <button onClick={fetchSite} disabled={loading}>
+        {loading ? "Fetching..." : "Fetch"}
+      </button>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      <h2>Preview:</h2>
+      {loading ? (
+        <p style={{ fontStyle: "italic" }}>Fetching website, please wait...</p>
+      ) : (
+        <iframe
+          srcDoc={html}
+          style={{
+            border: "1px solid #ccc",
+            marginTop: "20px",
+            width: "1400px",
+            height: "700px",
+            background: "#fff",
+          }}
+          sandbox="allow-scripts allow-same-origin"
+        />
+      )}
+
+      <h2>Full Code Generator (Editable):</h2>
+      <textarea
+        value={html}
+        onChange={(e) => setHtml(e.target.value)}
+        style={{
+          border: "1px solid #ccc",
+          padding: 15,
+          marginTop: 20,
+          height: 400,
+          width: "100%",
+          background: "#1e1e1e",
+          color: "#d4d4d4",
+          fontFamily: "monospace",
+          whiteSpace: "pre-wrap",
+        }}
+        disabled={loading} // disable textarea while loading
+      />
+
+      <div style={{ marginTop: 10 }}>
+        <button onClick={copyToClipboard} style={{ marginRight: 10 }} disabled={loading}>
+          📋 Copy HTML
+        </button>
+        <button onClick={downloadHTML} disabled={loading}>
+          💾 Download HTML
+        </button>
+      </div>
+
+      <h2 style={{ marginTop: 30 }}>Extracted Assets</h2>
+
+      <h3>Images ({assets.images.length}):</h3>
+      <ul>
+        {assets.images.map((src, i) => (
+          <li key={i}>
+            <a href={src} target="_blank" rel="noreferrer">
+              {src}
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <h3>CSS Files ({assets.css.length}):</h3>
+      <ul>
+        {assets.css.map((src, i) => (
+          <li key={i}>
+            <a href={src} target="_blank" rel="noreferrer">
+              {src}
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <h3>JS Files ({assets.js.length}):</h3>
+      <ul>
+        {assets.js.map((src, i) => (
+          <li key={i}>
+            <a href={src} target="_blank" rel="noreferrer">
+              {src}
+            </a>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
