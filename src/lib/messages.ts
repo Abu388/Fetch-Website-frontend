@@ -36,7 +36,7 @@ export async function deleteMessage(id: string) {
 
 
 // Listen to real-time changes on the 'messages' table
-export function onMessageChange(callback: (payload: any) => void) {
+export function onMessageChange(callback: (payload: unknown) => void) {
   const channel = supabase
     .channel('public:messages')
     .on(

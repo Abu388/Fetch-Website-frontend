@@ -79,7 +79,7 @@ export default function AIChat() {
           }
         }
       }
-    } catch (err) {
+    } catch (_err) {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === aiMessageId

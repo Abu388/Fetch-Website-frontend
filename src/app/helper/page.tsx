@@ -15,7 +15,7 @@ export default function HelperChat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
-  const [username, setUsername] = useState('Anonymous'); // Or use user auth if you want
+  const [username, _setUsername] = useState('Anonymous'); // Or use user auth if you want
 
   // Fetch messages on mount
   useEffect(() => {
