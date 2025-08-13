@@ -1,17 +1,10 @@
-import './globals.css';
-import Link from 'next/link';
+import "./globals.css";
 
+import NavBar from "./components/NavBar";
 export const metadata = {
-  title: 'Site Fetcher',
-  description: 'Fetch and preview website HTML',
+  title: "Site Fetcher",
+  description: "Fetch and preview website HTML",
 };
-
-const navLinks = [
-  { href: '/', label: 'Fetch' },
-  { href: '/helper', label: 'Helper' },
-  { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact' },
-];
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -20,33 +13,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         style={{
           margin: 0,
           fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-          backgroundColor: '#f0f2f5',
-          minHeight: '100vh',
+          backgroundColor: "#f0f2f5",
+          minHeight: "100vh",
         }}
       >
         <header
           style={{
-            padding: '15px 40px',
-            background: '#1a1a2e',
-            color: '#eaeaea',
-            display: 'flex',
-            alignItems: 'center',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-            position: 'sticky',
+            padding: "15px 40px",
+            background: "#1a1a2e",
+            color: "#eaeaea",
+            display: "flex",
+            alignItems: "center",
+            boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+            position: "sticky",
             top: 0,
             zIndex: 1000,
           }}
         >
-          <nav style={{ display: 'flex', gap: '30px' }}>
-            {navLinks.map(({ href, label }) => (
-              <Link key={href} href={href} className="nav-link">
-                {label}
-              </Link>
-            ))}
-          </nav>
+          <NavBar />
         </header>
 
-        <main style={{ padding: '30px', minHeight: 'calc(100vh - 70px)' }}>{children}</main>
+        <main style={{ padding: "30px", minHeight: "calc(100vh - 70px)" }}>
+          {children}
+        </main>
       </body>
     </html>
   );
