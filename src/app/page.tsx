@@ -76,7 +76,7 @@ export default function HomePage() {
   const fetchSite = async () => {
     setLoading(true);  // start loading
     try {
-      const res = await axios.post("http://localhost:5000/fetch-site", { url });
+      const res = await axios.post("https://fetch-website-backend.onrender.com/fetch-site", { url });
       setHtml(res.data.html);
       extractAssets(res.data.html);
     } catch (err) {
