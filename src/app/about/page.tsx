@@ -30,56 +30,43 @@ export default function AIChat() {
     setLoading(true);
 
     const aiMessageId = Date.now().toString() + "-ai";
-    setMessages((prev) => [
-      ...prev,
-      { id: aiMessageId, content: "" }, // empty string, will fill as we stream
-    ]);
+    setMessages((prev) => [...prev, { id: aiMessageId, content: "" }]);
 
     try {
-      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const res = await fetch("/api/ai", {
         method: "POST",
-        headers: {
-          Authorization: "Bearer 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",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "deepseek/deepseek-r1:free",
-          messages: [{ role: "user", content: input }],
-          stream: true,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: input }),
       });
 
-      const reader = res.body?.getReader();
-      const decoder = new TextDecoder("utf-8");
+      const data = await res.json();
 
-      let partial = "";
+      if (data.error) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === aiMessageId
+              ? { ...msg, content: "Error fetching AI response." }
+              : msg
+          )
+        );
+      } else {
+        const fullText = data.choices?.[0]?.message?.content || "No response.";
 
-      while (reader) {
-        const { value, done } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk
-          .split("\n")
-          .map((line) => line.trim())
-          .filter((line) => line);
-
-        for (const line of lines) {
-          if (line === "data: [DONE]") continue;
-          if (line.startsWith("data: ")) {
-            const json = JSON.parse(line.replace("data: ", ""));
-            const token = json.choices?.[0]?.delta?.content || "";
-            partial += token;
-
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === aiMessageId ? { ...msg, content: partial } : msg
-              )
-            );
-          }
-        }
+        // Simulate streaming: reveal text character by character
+        let i = 0;
+        const interval = setInterval(() => {
+          i++;
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === aiMessageId
+                ? { ...msg, content: fullText.slice(0, i) }
+                : msg
+            )
+          );
+          if (i >= fullText.length) clearInterval(interval);
+        }, 20); // adjust speed here
       }
-    } catch (_err) {
+    } catch (_) {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === aiMessageId

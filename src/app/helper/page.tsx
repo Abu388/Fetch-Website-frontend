@@ -62,16 +62,6 @@ export default function HelperChat() {
     };
   }, []);
 
-  async function fetchMessages() {
-    const { data, error } = await supabase
-      .from<'messages', Message>('messages')
-      .select('*')
-      .order('created_at', { ascending: true });
-
-    if (!error && data) {
-      setMessages(data);
-    }
-  }
 
   async function sendMessage() {
     if (!input.trim()) return;
