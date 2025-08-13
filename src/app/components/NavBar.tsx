@@ -8,7 +8,7 @@ const navLinks = [
   { href: '/', label: 'Fetch' },
   { href: '/helper', label: 'FAQ' },
   { href: '/about', label: 'chatAI' },
-  { href: '/contact', label: 'Contact' },
+  { href: '/contact', label: 'plugin' },
 ];
 
 export default function Nav() {
