@@ -39,7 +39,7 @@ bash
 Copy
 Edit
 # Clone the repo
-git clone https://github.com/yourusername/frontend-repo.git
+git clone https://github.com/Abu388/Fetch-Website-frontend
 
 # Go into the project folder
 cd frontend-repo
